@@ -1,77 +1,49 @@
 #!/sbin/openrc-run
-# Redmi Note 10 (mojito/sunny) Wi-Fi bring-up.
+# Redmi Note 10 (mojito/sunny): load the WCN3950 drivers in the order its firmware requires.
 #
-# The modem's WLAN firmware rejects the capability request (error 119) until the ADSP sensor PD has been
-# served its files by hexagonrpcd. Only the secure node works for that here: with /dev/fastrpc-adsp
-# (qcom,non-secure-domain) the sensor PD gets the same file traffic but the capability still fails, and
-# the stock hexagonrpcd-adsp-sensorspd service (fastrpc user) cannot open the 0600 root-owned secure node.
-# So this service runs hexagonrpcd as root on /dev/fastrpc-adsp-secure, waits for the server's idle marker
-# (~15 s after boot), then loads ath10k_snoc once. If the capability is still
-# rejected, ath10k_snoc is unloaded again instead of leaving the firmware in an endless crash/restart loop.
-# ath10k_snoc and hci_uart are blacklisted for udev autoload (/etc/modprobe.d/ath10k-mojito.conf).
+# 1. ath10k_snoc only after the ADSP sensor PD has been served by hexagonrpcd-mojito ($SERVED). The modem's WLAN
+#    firmware answers the capability request with error 119 until then (verified on stock Android: only with the
+#    sensorspd file server running) and then crashes and restarts; the driver does not retry.
+# 2. hci_uart only after wlan0 exists. Bluetooth and WLAN share the WCN3950 PMU rails, and ath10k's power-sequencer
+#    vote keeps them up. Before that, Bluetooth's power cycles (probe retries, bluetoothd's power-on) drop the rails
+#    after the modem has initialised the chip, and both Bluetooth and WLAN stay dead for the boot.
+# Both modules are therefore kept from udev autoload (/usr/lib/modprobe.d/ath10k-mojito.conf).
 
-name="mojito Wi-Fi (sensor PD + ath10k)"
-supervisor=supervise-daemon
-# The patched build (package hexagonrpcd-mojito): the sensor PD writes its registry to $STATE (seeded once from the
-# firmware package; delete it to start over) and the server creates $IDLE when the PD stops asking for files.
-command=/usr/bin/hexagonrpcd-mojito
-FWDIR=/usr/share/qcom/sm6150/Xiaomi/mojito
-STATE=/var/lib/hexagonrpcd/mojito
-IDLE=/run/hexagonrpcd/idle
-command_args="-f /dev/fastrpc-adsp-secure -d adsp -s -R $FWDIR -w $STATE -i $IDLE"
-LOG=/run/hexagonrpcd/sensorspd.log
-output_log=$LOG
-error_log=$LOG
+name="mojito Wi-Fi/Bluetooth"
+description="Load ath10k_snoc and hci_uart once the WCN3950 firmware is ready for them"
+SERVED=/run/hexagonrpcd-mojito/served
 
 depend() {
-	need rmtfs
-	after tqftpserv
+	need hexagonrpcd-mojito
 }
 
-start_pre() {
-	checkpath -d -m 0755 /run/hexagonrpcd
-	: > $LOG
-	if [ ! -d "$STATE/registry" ]; then
-		rm -rf "$STATE/registry.new"
-		mkdir -p "$STATE" &&
-		cp -a "$FWDIR/sensors/registry" "$STATE/registry.new" &&
-		mv "$STATE/registry.new" "$STATE/registry" ||
-			{ eerror "could not seed the sensor registry in $STATE"; return 1; }
-	fi
-	# The sensor PD must be attached AFTER the modem's WLAN firmware service (QMI 69) is registered:
-	# every run that started hexagonrpcd earlier got 119 for the rest of the boot.
-	for i in $(seq 1 120); do
-		qrtr-lookup 2>/dev/null | awk '$1==69' | grep -q . && return 0
-		sleep 0.5
-	done
-	ewarn "WLAN firmware service (69) not seen after 60 s"
-}
-
-start_post() {
-	( # wait until the server reports the sensor PD idle (it has been served its files)
-	  for i in $(seq 1 360); do
-		[ -e $IDLE ] && break
+start() {
+	ebegin "Loading Wi-Fi and Bluetooth in the background"
+	( for i in $(seq 1 360); do
+		[ -e $SERVED ] && break
 		sleep 0.5
 	  done
-	  touch /run/hexagonrpcd/ready		# the sensor PD is served (mojito-sensors waits for this)
+	  [ -e $SERVED ] || { logger -t mojito-wifi "sensor PD not served after 180 s, not loading Wi-Fi"; exit 1; }
 	  lsmod | grep -q '^ath10k_snoc ' && exit 0
 	  before=$(dmesg | grep -c 'capability req rejected')
 	  logger -t mojito-wifi "sensor PD served, loading ath10k_snoc"
 	  modprobe ath10k_snoc
 	  for i in $(seq 1 60); do
 		if [ -e /sys/class/net/wlan0 ]; then
-			# Bluetooth (same WCN3950) only now: an hci_uart probe before the modem has brought the
-			# chip up (~5 s into boot) times out, power-cycles it and leaves it dead for the whole
-			# boot (Wi-Fi then gets 119 too). hci_uart is blacklisted for udev autoload.
 			logger -t mojito-wifi "wlan0 up, loading hci_uart"
 			modprobe hci_uart
 			exit 0
 		fi
 		if [ "$(dmesg | grep -c 'capability req rejected')" -gt "$before" ]; then
+			# leave the firmware alone instead of letting it crash and restart in a loop
 			logger -t mojito-wifi "capability rejected (119): unloading ath10k_snoc"
 			rmmod ath10k_snoc
 			exit 1
 		fi
 		sleep 0.5
 	  done ) >/dev/null 2>&1 &
+	eend 0
 }
+
+# Nothing to stop: the drivers stay loaded (unloading hci_uart after a failed setup oopses in 7.4,
+# qca_serdev_remove -> serdev_device_close on an already closed port).

@@ -1,16 +1,16 @@
 #!/sbin/openrc-run
 # Redmi Note 10 (mojito/sunny) sensors: accelerometer, light and compass.
 #
-# iio-sensor-proxy only finds them once the ADSP sensor PD has been served its files by hexagonrpcd, which
-# mojito-wifi runs (Wi-Fi needs the same thing). The udev rule shipped with iio-sensor-proxy asks systemd to
-# start it, so on OpenRC nothing does. This service waits for mojito-wifi's ready marker, then starts the proxy.
+# iio-sensor-proxy only finds them once the ADSP sensor PD has been served its files by hexagonrpcd-mojito
+# (which creates /run/hexagonrpcd-mojito/served then). The udev rule shipped with iio-sensor-proxy asks systemd
+# to start it, so on OpenRC nothing does. This service waits for that signal, then starts the proxy.
 
 name="mojito sensors"
 description="Start iio-sensor-proxy once the ADSP sensor PD is served"
-READY=/run/hexagonrpcd/ready
+READY=/run/hexagonrpcd-mojito/served
 
 depend() {
-	need dbus mojito-wifi
+	need dbus hexagonrpcd-mojito
 }
 
 start() {

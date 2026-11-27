@@ -3,7 +3,7 @@
 pkgname=device-xiaomi-mojito
 pkgdesc="Xiaomi Redmi Note 10 (mainline)"
 pkgver=2
-pkgrel=3
+pkgrel=4
 url="https://github.com/258ryan/mojito-mainline"
 license="MIT"
 arch="aarch64"
@@ -74,6 +74,7 @@ package() {
 }
 
 openrc() {
+	depends="hexagonrpcd-mojito-openrc"
 	install_if="$pkgname=$pkgver-r$pkgrel openrc"
 	install -Dm755 "$srcdir"/mojito-wifi.initd "$subpkgdir"/etc/init.d/mojito-wifi
 	install -Dm755 "$srcdir"/mojito-sensors.initd "$subpkgdir"/etc/init.d/mojito-sensors
@@ -82,9 +83,9 @@ openrc() {
 sha512sums="
 25a366eb6a9221aab629dee808bb8691d639df2f53c372fef72a8f705593ee7d364c889bae956b387a932d0ba8d29cacdf9448e9926466d2eda7a83bc8f730f7  deviceinfo
 a230e30a05453491d41ba4a6a4c504e3dbe7b630402ac2b837aa5d977c2d38c73c93fb198e8aff892a12005de8d2355593fe2fae8e3e9412418efb1d32250022  kernel-cmdline.conf
-d747c141e003045164ad40b027d4ec6bdb4c35faa19c143964dc3c63968d66242b930678de43fbf189fd538dbd395af593949efca937797c633e19c5f4bc7090  mojito-wifi.initd
-df94a90787d36e5c2aae631b4a0472dcee1981a372def14d79292260c03f03c305cfaf42623abafb59ed831f58507e27458e3bff96863af8fad0a63877234a14  mojito-sensors.initd
-9483632ee727423d7b0f7116ce3e78fe21a0f4c9104376a4823dab321fee1bfa2314ec8c69938f5b7b84055f09de169b93172880861b461745d4e62e13014845  ath10k-mojito.modprobe.conf
+94c5c44011d5abac292d33407b47c59e57c00bc701320cd4a28c5de7869dbebc7a573e8715088ec3ca2c1b53bc2dd5cfbe970827a85b0c29818eec4e3d05cee6  mojito-wifi.initd
+eb89089652ec9e92c913ab6c155789f5bb1bb99d76b691a9c00172e51613f0f300bfe06fcc085e330dcb4d9665f9e174e9289ac46c007e03d2a742b9a9320886  mojito-sensors.initd
+47ab855f7f2544ce153a461c721f55de51bb3204a241c0c632552b94437ba8a41ce8f4663991c620934d0a0b8b45b5bdc222d78f9de1013d033d5328fe359ab1  ath10k-mojito.modprobe.conf
 46fc7008b3a49783b56fa4113d792a94361927cfc7bfef48d60dce20dae560ae9f80900734f6e1d2410e5796da35f429aceed97511ae6e83a631ed496f1e574b  gmobile-mojito.sh
 4450e443cd139246afd712c34961eb7a0e9417e86dba361252e3e000d30622b44ad23221b8f7d2120359e1cb3bf2578296649793a24f1aa32ae0027eaf507979  display-panel.json
 9baf6f25416af8e5d0792c28bd87c42a6266dc7722c59a239ad800aeda713001a35ffec0074b5255193707dfb5f27a1e14050c3b48508db1cf48487f8adc340a  99-mojito-wallpaper.gschema.override

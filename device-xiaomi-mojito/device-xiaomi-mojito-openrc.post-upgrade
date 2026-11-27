@@ -1,5 +1,6 @@
 #!/bin/sh
-# Wi-Fi/Bluetooth bring-up after the ADSP sensor PD is served, and the sensors after that
+# sensor PD file server, then Wi-Fi/Bluetooth and the sensors once it has served the PD
+rc-update -q add hexagonrpcd-mojito default
 rc-update -q add mojito-wifi default
 rc-update -q add mojito-sensors default
 exit 0

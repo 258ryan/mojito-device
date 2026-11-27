@@ -1,18 +1,20 @@
 # hexagonrpcd with the Redmi Note 10 sensor-PD changes (writable registry, large inputs, idle marker).
-# Installed as /usr/bin/hexagonrpcd-mojito next to the stock hexagonrpcd; used by device-xiaomi-mojito's
-# mojito-wifi service. Patch details: https://github.com/258ryan/mojito-mainline (mainline/hexagonrpc/).
+# Installed as /usr/bin/hexagonrpcd-mojito next to the stock hexagonrpcd, with its own OpenRC service
+# (hexagonrpcd-mojito: secure node, fastrpc user, "served" marker for the sensors and Wi-Fi). Patch details: https://github.com/258ryan/mojito-mainline (mainline/hexagonrpc/).
 pkgname=hexagonrpcd-mojito
 pkgver=0.4.0
-pkgrel=1
+pkgrel=3
 pkgdesc="Qualcomm HexagonFS daemon, patched for the Redmi Note 10 sensor PD"
 url="https://github.com/linux-msm/hexagonrpc"
 arch="aarch64"
 license="GPL-3.0-or-later"
 depends="hexagonrpcd"
 makedepends="hexagonrpcd linux-headers meson"
+subpackages="$pkgname-openrc"
 source="
 	hexagonrpc-$pkgver.tar.gz::https://github.com/linux-msm/hexagonrpc/archive/refs/tags/v$pkgver.tar.gz
 	0001-hexagonrpcd-writable-registry-large-inputs-rename-idle-marker.patch
+	hexagonrpcd-mojito.initd
 "
 builddir="$srcdir/hexagonrpc-$pkgver"
 
@@ -29,7 +31,14 @@ package() {
 	install -Dm755 output/hexagonrpcd/hexagonrpcd "$pkgdir"/usr/bin/hexagonrpcd-mojito
 }
 
+openrc() {
+	depends="qrtr rmtfs-openrc"
+	install_if="$pkgname=$pkgver-r$pkgrel openrc"
+	install -Dm755 "$srcdir"/hexagonrpcd-mojito.initd "$subpkgdir"/etc/init.d/hexagonrpcd-mojito
+}
+
 sha512sums="
 18ebe4beeed97018243bec5043b8395c07c76f1174085e41a32648fd481485076fefffa091700ca1f72163687405456e5537aa538bc4f08fecacb3f83e3a82d8  hexagonrpc-0.4.0.tar.gz
 19dcd093b17349ceb0835046453e7aa80ce28d0f5299489a50fca5464435a837fd9b4bd5b670711ef1c23a1c947fb8b1d2d9104ca52a071f69d0ae7fbb907981  0001-hexagonrpcd-writable-registry-large-inputs-rename-idle-marker.patch
+29df897428c8dfb6373eb27d71e2ff6cc7c7a0a3bb1dd71e04909319ad78fa5307475192add6a13401565881d75f48026f181bdc0d84b9ca1426827a901214fa  hexagonrpcd-mojito.initd
 "

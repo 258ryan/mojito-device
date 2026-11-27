@@ -1,0 +1,62 @@
+#!/sbin/openrc-run
+# hexagonrpcd (patched build) for the Redmi Note 10 (mojito/sunny) ADSP sensor PD.
+#
+# Like the stock hexagonrpcd-adsp-sensorspd service, but:
+#  - on /dev/fastrpc-adsp-secure: with /dev/fastrpc-adsp (qcom,non-secure-domain) the sensor PD gets its files, yet
+#    the modem's WLAN firmware still rejects the capability request (error 119);
+#  - the sensor PD's registry writes go to $hexagonrpcd_state_dir (seeded once from the firmware package; delete the
+#    directory to start over);
+#  - the daemon creates $SERVED once the sensor PD has stopped requesting files: the "sensor PD served" signal that
+#    mojito-wifi (Wi-Fi firmware rule) and mojito-sensors (iio-sensor-proxy) wait for.
+# The node is fastrpc:fastrpc 0600 (hexagonrpcd's 10-fastrpc.rules), so this runs as the fastrpc user.
+
+name="Hexagonrpcd ADSP SensorPD (mojito)"
+description="Serves the Redmi Note 10 ADSP sensor PD its files (needed by sensors and Wi-Fi)"
+supervisor=supervise-daemon
+command=/usr/bin/hexagonrpcd-mojito
+command_user=fastrpc:fastrpc
+
+: "${hexagonrpcd_node:=/dev/fastrpc-adsp-secure}"
+: "${hexagonrpcd_fw_dir:=/usr/share/qcom/sm6150/Xiaomi/mojito}"
+: "${hexagonrpcd_state_dir:=/var/lib/hexagonrpcd/mojito}"
+RUNDIR=/run/hexagonrpcd-mojito
+SERVED=$RUNDIR/served
+
+command_args="-f $hexagonrpcd_node -d adsp -s -R $hexagonrpcd_fw_dir -w $hexagonrpcd_state_dir -i $SERVED"
+output_log=$RUNDIR/hexagonrpcd.log
+error_log=$RUNDIR/hexagonrpcd.log
+
+depend() {
+	need rmtfs
+	after tqftpserv
+}
+
+start_pre() {
+	checkpath -d -o fastrpc:fastrpc -m 0755 "$RUNDIR"
+	rm -f "$SERVED"
+	# supervise-daemon opens the log as the service user
+	checkpath -f -o fastrpc:fastrpc -m 0644 "$RUNDIR/hexagonrpcd.log"
+	: > "$RUNDIR/hexagonrpcd.log"
+	if [ ! -d "$hexagonrpcd_state_dir/registry" ]; then
+		rm -rf "$hexagonrpcd_state_dir/registry.new"
+		mkdir -p "$hexagonrpcd_state_dir" &&
+		cp -a "$hexagonrpcd_fw_dir/sensors/registry" "$hexagonrpcd_state_dir/registry.new" &&
+		mv "$hexagonrpcd_state_dir/registry.new" "$hexagonrpcd_state_dir/registry" ||
+			{ eerror "could not seed the sensor registry in $hexagonrpcd_state_dir"; return 1; }
+	fi
+	chown -R fastrpc:fastrpc "$hexagonrpcd_state_dir"
+
+	# Firmware rule: the sensor PD must be attached after the modem's WLAN firmware service (QMI 69) is
+	# registered; when the server started earlier, the WLAN firmware rejected the capability request (119) for
+	# the rest of the boot.
+	ebegin "Waiting for the modem's WLAN firmware service (QMI 69)"
+	for i in $(seq 1 120); do
+		if qrtr-lookup 2>/dev/null | awk '$1==69' | grep -q .; then
+			eend 0
+			return 0
+		fi
+		sleep 0.5
+	done
+	eend 1 "QMI 69 not seen after 60 s, starting anyway"
+	return 0
+}
