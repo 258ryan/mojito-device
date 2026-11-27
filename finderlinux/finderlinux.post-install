@@ -1,0 +1,5 @@
+#!/bin/sh
+# what systemd-tmpfiles does on Debian (lib/tmpfiles.d/finderlinux.conf): the shared wallpaper folder for the login screen
+mkdir -p /var/lib/finderlinux/wallpapers
+chmod 1777 /var/lib/finderlinux/wallpapers 2>/dev/null
+exit 0

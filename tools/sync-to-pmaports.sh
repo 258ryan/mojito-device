@@ -9,7 +9,7 @@ PMA=${1:-$HOME/.local/var/pmbootstrap/cache_git/pmaports}
 MAIN=${2:-$HOME/.claude-work/mojito-mainline-repo}
 FW=${3:-$HOME/.claude-work/mojito-firmware-repo}
 T=$PMA/device/testing
-for p in device-xiaomi-mojito hexagonrpcd-mojito u-boot-xiaomi-mojito; do
+for p in device-xiaomi-mojito hexagonrpcd-mojito u-boot-xiaomi-mojito finderlinux finderapps; do
 	rsync -a --delete --exclude 'src/' --exclude 'pkg/' "$HERE/$p/" "$T/$p/"
 done
 rsync -a --delete "$MAIN/mainline/linux-postmarketos-qcom-sm6150/" "$T/linux-postmarketos-qcom-sm6150/"
