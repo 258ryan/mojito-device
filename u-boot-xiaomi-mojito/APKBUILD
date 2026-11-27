@@ -12,6 +12,7 @@ url="https://u-boot.org"
 arch="aarch64"
 license="GPL-2.0-or-later"
 makedepends="
+	bash
 	bc
 	bison
 	dtc
