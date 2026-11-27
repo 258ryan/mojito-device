@@ -40,7 +40,12 @@ start_pre() {
 	if [ ! -d "$hexagonrpcd_state_dir/registry" ]; then
 		rm -rf "$hexagonrpcd_state_dir/registry.new"
 		mkdir -p "$hexagonrpcd_state_dir" &&
-		cp -a "$hexagonrpcd_fw_dir/sensors/registry" "$hexagonrpcd_state_dir/registry.new" &&
+		# a firmware package may ship no registry at all (the sensor PD builds it from sensors/config)
+		if [ -d "$hexagonrpcd_fw_dir/sensors/registry" ]; then
+			cp -a "$hexagonrpcd_fw_dir/sensors/registry" "$hexagonrpcd_state_dir/registry.new"
+		else
+			mkdir "$hexagonrpcd_state_dir/registry.new"
+		fi &&
 		mv "$hexagonrpcd_state_dir/registry.new" "$hexagonrpcd_state_dir/registry" ||
 			{ eerror "could not seed the sensor registry in $hexagonrpcd_state_dir"; return 1; }
 	fi
