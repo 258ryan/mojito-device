@@ -12,6 +12,7 @@ url="https://u-boot.org"
 arch="aarch64"
 license="GPL-2.0-or-later"
 makedepends="
+	android-tools-mkbootimg
 	bash
 	bc
 	bison
@@ -19,7 +20,6 @@ makedepends="
 	flex
 	gnutls-dev
 	linux-postmarketos-qcom-sm6150
-	mkbootimg
 	openssl-dev
 	py3-elftools
 	py3-setuptools
