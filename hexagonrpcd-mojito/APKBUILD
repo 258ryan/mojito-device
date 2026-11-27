@@ -3,12 +3,13 @@
 # mojito-wifi service. Patch details: https://github.com/258ryan/mojito-mainline (mainline/hexagonrpc/).
 pkgname=hexagonrpcd-mojito
 pkgver=0.4.0
-pkgrel=0
+pkgrel=1
 pkgdesc="Qualcomm HexagonFS daemon, patched for the Redmi Note 10 sensor PD"
 url="https://github.com/linux-msm/hexagonrpc"
 arch="aarch64"
 license="GPL-3.0-or-later"
-makedepends="linux-headers meson"
+depends="hexagonrpcd"
+makedepends="hexagonrpcd linux-headers meson"
 source="
 	hexagonrpc-$pkgver.tar.gz::https://github.com/linux-msm/hexagonrpc/archive/refs/tags/v$pkgver.tar.gz
 	0001-hexagonrpcd-writable-registry-large-inputs-rename-idle-marker.patch
