@@ -25,7 +25,9 @@ Kernel and DTB updates are plain package upgrades; nothing is flashed. `boot-dep
 
 Flash U-Boot once: `fastboot flash boot_b u-boot.img` (from `/usr/share/u-boot/xiaomi-mojito/`).
 
-## Still installed by hand (not packaged yet)
+## Workarounds in the device package
 
-- greeter PulseAudio `client.conf` (`autospawn = no`) in `/var/lib/greetd/.config/pulse/` (owned by greetd)
-- the accelerometer udev rule (`81-libssc-xiaomi-mojito.rules`) is deliberately not installed yet
+- `clk_ignore_unused` on the kernel command line (unclaimed bootloader clocks).
+- Plain wallpaper (the default JPEG XL one makes glycin exhaust memory into a lock-up).
+- `autospawn = no` for the greeter's PulseAudio (installed into greetd's home by post-install): the greeter's
+  PulseAudio holds the sound card otherwise. Proper fix: hand the card from the greeter to the user session.

@@ -1,0 +1,9 @@
+#!/bin/sh
+# WORKAROUND (see APKBUILD): stop the greeter's PulseAudio from autospawning and holding the sound card
+if getent passwd greetd >/dev/null; then
+	home=$(getent passwd greetd | cut -d: -f6)
+	install -d -o greetd -g greetd "$home/.config" "$home/.config/pulse"
+	install -m644 -o greetd -g greetd /usr/share/device-xiaomi-mojito/greetd-pulse-client.conf \
+		"$home/.config/pulse/client.conf"
+fi
+exit 0
