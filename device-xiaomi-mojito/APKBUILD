@@ -22,7 +22,7 @@ depends="
 	systemd-boot
 "
 makedepends="devicepkg-dev"
-install="$pkgname.post-install $pkgname.post-upgrade $pkgname-openrc.post-install $pkgname-openrc.post-upgrade"
+install="$pkgname-openrc.post-install $pkgname-openrc.post-upgrade"
 subpackages="$pkgname-openrc"
 source="
 	deviceinfo
@@ -36,7 +36,6 @@ source="
 	ucm-HiFi.conf
 	ucm-card.conf
 	81-libssc-xiaomi-mojito.rules
-	greetd-pulse-client.conf
 "
 
 build() {
@@ -64,11 +63,6 @@ package() {
 	install -Dm644 "$srcdir"/81-libssc-xiaomi-mojito.rules \
 		-t "$pkgdir"/usr/lib/udev/rules.d
 
-	# WORKAROUND: the greeter's PulseAudio (greetd user) holds the sound card, the user session then gets none.
-	# Installed into greetd's home by the post-install script (it must be owned by greetd).
-	install -Dm644 "$srcdir"/greetd-pulse-client.conf \
-		"$pkgdir"/usr/share/$pkgname/greetd-pulse-client.conf
-
 	install -Dm644 "$srcdir"/ucm-HiFi.conf \
 		"$pkgdir"/usr/share/alsa/ucm2/Xiaomi/mojito/HiFi.conf
 	install -Dm644 "$srcdir"/ucm-card.conf \
@@ -93,5 +87,4 @@ df94a90787d36e5c2aae631b4a0472dcee1981a372def14d79292260c03f03c305cfaf42623abafb
 6b27ca870f287d509a6d074e2dbc95319807a6c242bcb045df0a7a267f6e2673a7aeeb806b824d8e4d9e16183b0883002c351a499020664c9151f3add3ee5251  ucm-HiFi.conf
 5ee2ba18f2ddb5278c0e1352486545c049ebc1c481c81b0290bd03480b6cb564ad04c58ebe1f55eb680ac35f70a5f34b5d305cdafc50ad8862e181413291d0ba  ucm-card.conf
 6acea280dec7dace8780fb420bd33525d20bcd094168d01c124e15502fa3acc0221d7e326ad9eb52ea7bf35334f3749ea4265698e4fc8e1d0170c29f2c3fc696  81-libssc-xiaomi-mojito.rules
-b95bf2495cbf470e7c7c9a0962da86ef92d336de51e4e0cf876627ea927e15b83d347cc2abd02114984fac0437c1e44746db0c04dfac13dece9f263a86b81af9  greetd-pulse-client.conf
 "

@@ -29,5 +29,3 @@ Flash U-Boot once: `fastboot flash boot_b u-boot.img` (from `/usr/share/u-boot/x
 
 - `clk_ignore_unused` on the kernel command line (unclaimed bootloader clocks).
 - Plain wallpaper (the default JPEG XL one makes glycin exhaust memory into a lock-up).
-- `autospawn = no` for the greeter's PulseAudio (installed into greetd's home by post-install): the greeter's
-  PulseAudio holds the sound card otherwise. Proper fix: hand the card from the greeter to the user session.
