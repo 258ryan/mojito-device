@@ -2,7 +2,9 @@
 
 postmarketOS packages for the **Xiaomi Redmi Note 10** (mojito / sunny, SM6150) running **mainline Linux**: the device
 package, the patched hexagonrpcd for the ADSP sensor PD, and U-Boot chainloaded by the Xiaomi bootloader. The kernel
-package, its patches and the port's notes are in [mojito-mainline](https://github.com/258ryan/mojito-mainline).
+package, its patches and the port's notes are in [mojito-mainline](https://github.com/258ryan/mojito-mainline), the firmware
+package in [firmware-xiaomi-mojito](https://github.com/258ryan/firmware-xiaomi-mojito). Step-by-step build and install:
+mojito-mainline's README.
 
 | Package | What |
 |---|---|
@@ -19,7 +21,7 @@ Kernel and DTB updates are plain package upgrades; nothing is flashed. `boot-dep
 
 ## Build
 
-    tools/sync-to-pmaports.sh <pmaports> <mojito-mainline clone> <firmware package dir>
+    tools/sync-to-pmaports.sh <pmaports> <mojito-mainline clone> <firmware-xiaomi-mojito clone>/package
     pmbootstrap build linux-postmarketos-qcom-sm6150 firmware-xiaomi-mojito-mainline hexagonrpcd-mojito \
         device-xiaomi-mojito u-boot-xiaomi-mojito
 
