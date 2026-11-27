@@ -3,4 +3,6 @@
 rc-update -q add hexagonrpcd-mojito default
 rc-update -q add mojito-wifi default
 rc-update -q add mojito-sensors default
+# switches the call audio route on while a call is up
+rc-update -q add q6voiced default
 exit 0

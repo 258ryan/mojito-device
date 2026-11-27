@@ -3,7 +3,7 @@
 pkgname=device-xiaomi-mojito
 pkgdesc="Xiaomi Redmi Note 10 (mainline)"
 pkgver=2
-pkgrel=5
+pkgrel=6
 url="https://github.com/258ryan/mojito-mainline"
 license="MIT"
 arch="aarch64"
@@ -15,6 +15,7 @@ depends="
 	linux-postmarketos-qcom-sm6150
 	mkbootimg
 	postmarketos-base
+	q6voiced
 	qrtr
 	rmtfs
 	soc-qcom
@@ -35,6 +36,8 @@ source="
 	99-mojito-wallpaper.gschema.override
 	ucm-HiFi.conf
 	ucm-card.conf
+	ucm-VoiceCall.conf
+	q6voiced.conf
 	81-libssc-xiaomi-mojito.rules
 "
 
@@ -65,6 +68,11 @@ package() {
 
 	install -Dm644 "$srcdir"/ucm-HiFi.conf \
 		"$pkgdir"/usr/share/alsa/ucm2/Xiaomi/mojito/HiFi.conf
+	install -Dm644 "$srcdir"/ucm-VoiceCall.conf \
+		"$pkgdir"/usr/share/alsa/ucm2/Xiaomi/mojito/VoiceCall.conf
+	install -Dm644 "$srcdir"/q6voiced.conf \
+		-t "$pkgdir"/usr/share/q6voiced
+
 	# UCM looks the card up by its long name. Booted through U-Boot (SMBIOS present) ASoC builds it from DMI:
 	# "<sys_vendor>-<product_name>" without spaces; booted straight from ABL (no DMI) it is the card name.
 	install -Dm644 "$srcdir"/ucm-card.conf \
@@ -74,7 +82,7 @@ package() {
 }
 
 openrc() {
-	depends="hexagonrpcd-mojito-openrc"
+	depends="hexagonrpcd-mojito-openrc q6voiced-openrc"
 	install_if="$pkgname=$pkgver-r$pkgrel openrc"
 	install -Dm755 "$srcdir"/mojito-wifi.initd "$subpkgdir"/etc/init.d/mojito-wifi
 	install -Dm755 "$srcdir"/mojito-sensors.initd "$subpkgdir"/etc/init.d/mojito-sensors
@@ -82,7 +90,7 @@ openrc() {
 
 sha512sums="
 25a366eb6a9221aab629dee808bb8691d639df2f53c372fef72a8f705593ee7d364c889bae956b387a932d0ba8d29cacdf9448e9926466d2eda7a83bc8f730f7  deviceinfo
-a230e30a05453491d41ba4a6a4c504e3dbe7b630402ac2b837aa5d977c2d38c73c93fb198e8aff892a12005de8d2355593fe2fae8e3e9412418efb1d32250022  kernel-cmdline.conf
+978543533676dd54d31b55a391494d7053f850cfe220cd63011f3c2d02613a5b175f290540a64804335b7c4d4211311d3e2364e1961aee45faa961fb53f67c85  kernel-cmdline.conf
 94c5c44011d5abac292d33407b47c59e57c00bc701320cd4a28c5de7869dbebc7a573e8715088ec3ca2c1b53bc2dd5cfbe970827a85b0c29818eec4e3d05cee6  mojito-wifi.initd
 eb89089652ec9e92c913ab6c155789f5bb1bb99d76b691a9c00172e51613f0f300bfe06fcc085e330dcb4d9665f9e174e9289ac46c007e03d2a742b9a9320886  mojito-sensors.initd
 47ab855f7f2544ce153a461c721f55de51bb3204a241c0c632552b94437ba8a41ce8f4663991c620934d0a0b8b45b5bdc222d78f9de1013d033d5328fe359ab1  ath10k-mojito.modprobe.conf
@@ -90,6 +98,8 @@ eb89089652ec9e92c913ab6c155789f5bb1bb99d76b691a9c00172e51613f0f300bfe06fcc085e33
 4450e443cd139246afd712c34961eb7a0e9417e86dba361252e3e000d30622b44ad23221b8f7d2120359e1cb3bf2578296649793a24f1aa32ae0027eaf507979  display-panel.json
 9baf6f25416af8e5d0792c28bd87c42a6266dc7722c59a239ad800aeda713001a35ffec0074b5255193707dfb5f27a1e14050c3b48508db1cf48487f8adc340a  99-mojito-wallpaper.gschema.override
 32952b1954d1af9ca671926f50bcdb9deb06f4d1fe103470aaaea8a93e2c6620e8b3a902e89361908eacfcda81dc354bd2740b9b27fef369c0f324617b495586  ucm-HiFi.conf
-ae053d1dcc23059e63d1635e04bfb72fe2365e57ada82dc1be66b8bfe4db84914001855ac4491f324974b5ffa21813120884a8080f6ae63cba03589fc1843415  ucm-card.conf
+9991ff764e99dc5a04ebb892cb066eea5748aae02cc31e1ea6be12a92da1d7a05463aedd41c0a5655e423a3e6109ec1c9c0d28a4f87bf0d950a85bcef7436811  ucm-card.conf
+85b6adbaf0e2133bd4c25728974ba52599c250fd09be517360b7f2439798853b84b1d55df358857faf0752d94e282f291aa64b3105334fb3d3331b4b1394160c  ucm-VoiceCall.conf
+090feaf9e8a3bd9c8359175daf501d2af7c1c091236d62b43fd228ee48bbe448a70632705ba68de86400a86509fa1137421c41dbeb79489545eb20fad1b7c4d4  q6voiced.conf
 60f64debe66461238eabad0fecb8d2e5028166058bbf63a6e1038c6d1ed42a10548169aa1c253de23d1c247c659ea703605808e2a83aedfc2a28e958c286d6c1  81-libssc-xiaomi-mojito.rules
 "
