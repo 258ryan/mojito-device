@@ -1,0 +1,84 @@
+# Reference: <https://postmarketos.org/devicepkg>
+# Mainline port: https://github.com/258ryan/mojito-mainline
+pkgname=device-xiaomi-mojito
+pkgdesc="Xiaomi Redmi Note 10 (mainline)"
+pkgver=2
+pkgrel=0
+url="https://github.com/258ryan/mojito-mainline"
+license="MIT"
+arch="aarch64"
+options="!check !archcheck"
+depends="
+	alsa-ucm-conf
+	firmware-xiaomi-mojito-mainline
+	hexagonrpcd-mojito
+	linux-postmarketos-qcom-sm6150
+	mkbootimg
+	postmarketos-base
+	qrtr
+	rmtfs
+	soc-qcom
+	soc-qcom-qbootctl
+	systemd-boot
+"
+makedepends="devicepkg-dev"
+install="$pkgname-openrc.post-install $pkgname-openrc.post-upgrade"
+subpackages="$pkgname-openrc"
+source="
+	deviceinfo
+	kernel-cmdline.conf
+	mojito-wifi.initd
+	mojito-sensors.initd
+	ath10k-mojito.modprobe.conf
+	gmobile-mojito.sh
+	display-panel.json
+	99-mojito-wallpaper.gschema.override
+	ucm-HiFi.conf
+	ucm-card.conf
+"
+
+build() {
+	devicepkg_build $startdir $pkgname
+}
+
+package() {
+	devicepkg_package $startdir $pkgname
+
+	# ath10k_snoc and hci_uart are loaded in order by mojito-wifi, not by udev
+	install -Dm644 "$srcdir"/ath10k-mojito.modprobe.conf \
+		"$pkgdir"/usr/lib/modprobe.d/ath10k-mojito.conf
+
+	# Phosh/phoc display cutout and rounded corners (GLib resource overlay over gmobile's panel data)
+	install -Dm644 "$srcdir"/gmobile-mojito.sh \
+		"$pkgdir"/etc/profile.d/gmobile-mojito.sh
+	install -Dm644 "$srcdir"/display-panel.json \
+		"$pkgdir"/usr/share/gmobile-mojito/display-panels/xiaomi,mojito.json
+
+	# WORKAROUND: plain wallpaper; the default JPEG XL one makes glycin exhaust memory into a lock-up
+	install -Dm644 "$srcdir"/99-mojito-wallpaper.gschema.override \
+		-t "$pkgdir"/usr/share/glib-2.0/schemas
+
+	install -Dm644 "$srcdir"/ucm-HiFi.conf \
+		"$pkgdir"/usr/share/alsa/ucm2/Xiaomi/mojito/HiFi.conf
+	install -Dm644 "$srcdir"/ucm-card.conf \
+		"$pkgdir/usr/share/alsa/ucm2/conf.d/sm8250/Xiaomi Redmi Note 10.conf"
+}
+
+openrc() {
+	install_if="$pkgname=$pkgver-r$pkgrel openrc"
+	install -Dm755 "$srcdir"/mojito-wifi.initd "$subpkgdir"/etc/init.d/mojito-wifi
+	install -Dm755 "$srcdir"/mojito-sensors.initd "$subpkgdir"/etc/init.d/mojito-sensors
+}
+
+sha512sums="
+25a366eb6a9221aab629dee808bb8691d639df2f53c372fef72a8f705593ee7d364c889bae956b387a932d0ba8d29cacdf9448e9926466d2eda7a83bc8f730f7  deviceinfo
+e511ec977212ca342621db87982524179da2d01eb0688cc534e21655ce0b0be1b44d62502bdb08f976ac38c3d0f705942fa511c7f7343fc62cdef42c9ca011f4  kernel-cmdline.conf
+d747c141e003045164ad40b027d4ec6bdb4c35faa19c143964dc3c63968d66242b930678de43fbf189fd538dbd395af593949efca937797c633e19c5f4bc7090  mojito-wifi.initd
+df94a90787d36e5c2aae631b4a0472dcee1981a372def14d79292260c03f03c305cfaf42623abafb59ed831f58507e27458e3bff96863af8fad0a63877234a14  mojito-sensors.initd
+9483632ee727423d7b0f7116ce3e78fe21a0f4c9104376a4823dab321fee1bfa2314ec8c69938f5b7b84055f09de169b93172880861b461745d4e62e13014845  ath10k-mojito.modprobe.conf
+46fc7008b3a49783b56fa4113d792a94361927cfc7bfef48d60dce20dae560ae9f80900734f6e1d2410e5796da35f429aceed97511ae6e83a631ed496f1e574b  gmobile-mojito.sh
+4450e443cd139246afd712c34961eb7a0e9417e86dba361252e3e000d30622b44ad23221b8f7d2120359e1cb3bf2578296649793a24f1aa32ae0027eaf507979  display-panel.json
+9baf6f25416af8e5d0792c28bd87c42a6266dc7722c59a239ad800aeda713001a35ffec0074b5255193707dfb5f27a1e14050c3b48508db1cf48487f8adc340a  99-mojito-wallpaper.gschema.override
+6b27ca870f287d509a6d074e2dbc95319807a6c242bcb045df0a7a267f6e2673a7aeeb806b824d8e4d9e16183b0883002c351a499020664c9151f3add3ee5251  ucm-HiFi.conf
+5ee2ba18f2ddb5278c0e1352486545c049ebc1c481c81b0290bd03480b6cb564ad04c58ebe1f55eb680ac35f70a5f34b5d305cdafc50ad8862e181413291d0ba  ucm-card.conf
+"

@@ -1,0 +1,75 @@
+# Generic upstream qcom U-Boot (qcom_defconfig + qcom-phone.config) for the Redmi Note 10, chainloaded by the
+# Xiaomi ABL from boot_b. It maps the pmOS disk image nested in userdata (blkmap) and boots systemd-boot
+# from pmOS_boot via "bootefi bootmgr". Development notes: https://github.com/258ryan/mojito-mainline (mainline/u-boot/).
+#
+# Flash once (U-Boot then loads every kernel update from /boot by itself):
+#   fastboot flash boot_b /usr/share/u-boot/xiaomi-mojito/u-boot.img && fastboot set_active b
+pkgname=u-boot-xiaomi-mojito
+pkgver=2026.10
+pkgrel=0
+pkgdesc="U-Boot for the Xiaomi Redmi Note 10, chainloaded from the Android bootloader"
+url="https://u-boot.org"
+arch="aarch64"
+license="GPL-2.0-or-later"
+makedepends="
+	bc
+	bison
+	dtc
+	flex
+	gnutls-dev
+	linux-postmarketos-qcom-sm6150
+	mkbootimg
+	openssl-dev
+	py3-elftools
+	py3-setuptools
+	python3-dev
+	swig
+	util-linux-dev
+"
+options="!check !strip !archcheck"
+# ftp.denx.de release tarballs were unreachable when this was written: GitLab archive of the release tag
+source="
+	u-boot-$pkgver.tar.gz::https://git.u-boot-project.org/u-boot/u-boot/-/archive/v$pkgver/u-boot-v$pkgver.tar.gz
+	0001-usb-gadget-f_fastboot-only-dequeue-a-pending-IN-requ.patch
+	mojito.config
+"
+builddir="$srcdir/u-boot-v$pkgver"
+
+build() {
+	# Default environment: upstream qcom-phone.env, with preboot also exposing the pmOS partition table
+	# nested in userdata as "blkmap 0" (4 KiB blocks, as on the UFS LUN).
+	sed 's/^preboot=.*/preboot=scsi scan; run mojito_blkmap/' \
+		board/qualcomm/qcom-phone.env > "$srcdir"/mojito.env
+	grep -q '^preboot=scsi scan; run mojito_blkmap$' "$srcdir"/mojito.env
+	cat >> "$srcdir"/mojito.env <<-'ENV'
+
+	mojito_blkmap=part start scsi 0 userdata ud_start && part size scsi 0 userdata ud_size && blkmap create pmos && blkmap map pmos 0 0x${ud_size} linear scsi 0 0x${ud_start}
+	ENV
+	cp "$srcdir"/mojito.config "$srcdir"/mojito-frag.config
+	echo "CONFIG_ENV_DEFAULT_ENV_TEXT_FILE=\"$srcdir/mojito.env\"" >> "$srcdir"/mojito-frag.config
+
+	make HOSTCC=gcc qcom_defconfig qcom-phone.config
+	scripts/kconfig/merge_config.sh -m .config "$srcdir"/mojito-frag.config
+	make HOSTCC=gcc olddefconfig
+	make HOSTCC=gcc
+
+	# Android boot image for ABL: U-Boot in place of the kernel, the mojito DTB (carries the msm-id and
+	# board-id ABL matches) in the header v2 DTB slot; ABL passes that DTB on to U-Boot.
+	mkbootimg \
+		--kernel u-boot-nodtb.bin \
+		--dtb /boot/dtbs/qcom/sm6150-xiaomi-mojito.dtb \
+		--header_version 2 --pagesize 4096 --base 0x00000000 \
+		--kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --second_offset 0x00000000 \
+		--tags_offset 0x00000100 --dtb_offset 0x01f00000 \
+		-o u-boot.img
+}
+
+package() {
+	install -Dm644 u-boot-nodtb.bin u-boot.img -t "$pkgdir"/usr/share/u-boot/xiaomi-mojito/
+}
+
+sha512sums="
+d09bc9228c490a698a4a9dd41796f594271c8b3da6ae35c7a19fd629266dad6430bbe005b48e4e75975b48b10c3f2e28663ed6a9219fd522bcc73313c3389ad1  u-boot-2026.10.tar.gz
+eeacadf628410a92a5b2f0251782aafe01e2f769cbbdbb30bf903e29cb9b952cf205e80b3178dee6a8fd68ad47c0541626288de44b5a3bd043b8c25a3c4a8dd4  0001-usb-gadget-f_fastboot-only-dequeue-a-pending-IN-requ.patch
+aa485fa6041f2335a3878156f1ed44b7f7cb9a0a32a360f4e708961b2b6890d3dc05d4cd9d15f9d1c0b143ec703ec0dde8c6352b93d9c906911c700e1cde37bc  mojito.config
+"
