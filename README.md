@@ -23,7 +23,16 @@ Kernel and DTB updates are plain package upgrades; nothing is flashed. `boot-dep
     pmbootstrap build linux-postmarketos-qcom-sm6150 firmware-xiaomi-mojito-mainline hexagonrpcd-mojito \
         device-xiaomi-mojito u-boot-xiaomi-mojito
 
-Flash U-Boot once: `fastboot flash boot_b u-boot.img` (from `/usr/share/u-boot/xiaomi-mojito/`).
+Flash U-Boot once: `fastboot flash boot_b u-boot.img` (from `/usr/share/u-boot/xiaomi-mojito/`). Done on the phone
+2026-11-27 (U-Boot 2026.10-r0, kernel r31).
+
+## Installing on an existing (downstream) install
+
+Read the whole `apk add --simulate` output first: replacing the downstream packages also removes
+`postmarketos-base-downstream-dropbear` (and with it dropbear, the downstream SSH server). Enable OpenSSH before
+rebooting: `rc-update add sshd default`. Reformat `/boot` to FAT32 (`mkfs.vfat -F 32 -n pmOS_boot`), fix its fstab line
+(new UUID, `vfat`), mount it, then `apk fix linux-postmarketos-qcom-sm6150` so the kernel files and boot-deploy output
+land on it.
 
 ## Workarounds in the device package
 
