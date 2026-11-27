@@ -3,7 +3,7 @@
 pkgname=device-xiaomi-mojito
 pkgdesc="Xiaomi Redmi Note 10 (mainline)"
 pkgver=2
-pkgrel=4
+pkgrel=5
 url="https://github.com/258ryan/mojito-mainline"
 license="MIT"
 arch="aarch64"
@@ -91,5 +91,5 @@ eb89089652ec9e92c913ab6c155789f5bb1bb99d76b691a9c00172e51613f0f300bfe06fcc085e33
 9baf6f25416af8e5d0792c28bd87c42a6266dc7722c59a239ad800aeda713001a35ffec0074b5255193707dfb5f27a1e14050c3b48508db1cf48487f8adc340a  99-mojito-wallpaper.gschema.override
 32952b1954d1af9ca671926f50bcdb9deb06f4d1fe103470aaaea8a93e2c6620e8b3a902e89361908eacfcda81dc354bd2740b9b27fef369c0f324617b495586  ucm-HiFi.conf
 ae053d1dcc23059e63d1635e04bfb72fe2365e57ada82dc1be66b8bfe4db84914001855ac4491f324974b5ffa21813120884a8080f6ae63cba03589fc1843415  ucm-card.conf
-6acea280dec7dace8780fb420bd33525d20bcd094168d01c124e15502fa3acc0221d7e326ad9eb52ea7bf35334f3749ea4265698e4fc8e1d0170c29f2c3fc696  81-libssc-xiaomi-mojito.rules
+60f64debe66461238eabad0fecb8d2e5028166058bbf63a6e1038c6d1ed42a10548169aa1c253de23d1c247c659ea703605808e2a83aedfc2a28e958c286d6c1  81-libssc-xiaomi-mojito.rules
 "

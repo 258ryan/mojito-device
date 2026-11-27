@@ -1,3 +1,4 @@
 # iio-sensor-proxy with libssc (ADSP sensor core): accelerometer mount matrix for the Redmi Note 10 (mojito).
-# Measured 2026-11-27: upright reported "bottom-up", top-right reported "left-up" -> Y (and Z) inverted.
-SUBSYSTEM=="misc", KERNEL=="fastrpc-*", ENV{ACCEL_MOUNT_MATRIX}+="1, 0, 0; 0, -1, 0; 0, 0, -1"
+# The sensor is mounted rotated 180 degrees in the board plane: X and Y inverted, Z as is. Measured 2026-11-27: without a
+# matrix upright reports "bottom-up"; with "1, 0, 0; 0, -1, 0; 0, 0, -1" portrait was right but landscape was swapped.
+SUBSYSTEM=="misc", KERNEL=="fastrpc-*", ENV{ACCEL_MOUNT_MATRIX}+="-1, 0, 0; 0, -1, 0; 0, 0, 1"
